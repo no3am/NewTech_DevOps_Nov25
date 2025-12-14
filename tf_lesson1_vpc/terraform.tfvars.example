@@ -1,0 +1,24 @@
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is gitignored by default for security
+
+# AWS Configuration
+aws_region  = "eu-central-1"
+project_name = "tf-example"
+
+# Network Configuration
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+private_subnet_cidr = "10.0.2.0/24"
+
+# Security Configuration
+# Replace with your actual IP address in CIDR format (e.g., "1.2.3.4/32")
+# You can find your IP at https://whatismyipaddress.com/
+my_ip = "YOUR_IP_ADDRESS/32"
+
+# EC2 Configuration
+instance_type = "t3.micro"
+# REQUIRED: Provide the name of your existing AWS key pair
+# This is the name you see in AWS Console (EC2 > Key Pairs)
+# Make sure you have the corresponding .pem file on your local machine
+key_pair_name = "your-key-pair-name"
+
