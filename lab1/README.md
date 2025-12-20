@@ -15,7 +15,7 @@ The calculator supports the following operations:
 ## Project Structure
 
 ```
-GH actions/
+lab1/
 ├── calculator.py           # Main calculator module
 ├── test_calculator.py      # Unit tests
 ├── requirements.txt        # Python dependencies

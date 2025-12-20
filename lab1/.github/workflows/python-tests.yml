@@ -31,10 +31,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest
-      working-directory: './gh_actions'
+      working-directory: './lab1'
     
     # Step 4: Run the tests
     - name: Run tests
       run: |
         python -m unittest test_calculator.py -v
-      working-directory: './gh_actions'
+      working-directory: './lab1'
