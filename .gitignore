@@ -26,3 +26,18 @@ terraform.rc
 # Ignore lock files (optional - some teams prefer to commit these)
 # .terraform.lock.hcl
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+

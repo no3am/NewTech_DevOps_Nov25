@@ -1,0 +1,6 @@
+# No external dependencies required for the calculator
+# All functionality uses Python standard library
+
+# For development and testing (optional)
+pytest>=7.4.0
+pytest-cov>=4.1.0
