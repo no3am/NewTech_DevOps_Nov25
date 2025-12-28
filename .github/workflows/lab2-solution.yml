@@ -146,7 +146,7 @@ jobs:
     # This avoids uploading 3 identical reports
     - name: Upload coverage report
       if: matrix.python-version == '3.11'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lab1-coverage-report
         path: ./GH_Actions/lab1/coverage.xml
@@ -200,7 +200,7 @@ jobs:
     # STEP 5: Upload coverage report (only for Python 3.11)
     - name: Upload coverage report
       if: matrix.python-version == '3.11'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lab2-coverage-report  # Different name than lab1
         path: ./GH_Actions/lab2/coverage.xml
