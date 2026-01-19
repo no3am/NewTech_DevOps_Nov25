@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Web service - our Flask application
+  web:
+    build: .
+    ports:
+      - "8000:7000"  # Map host port 8000 to container port 7000
+    environment:
+      - DB_HOST=db           # Use service name 'db' as hostname
+      - DB_NAME=mydb
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres123
+      - DB_PORT=5432
+    depends_on:
+      # This ensures 'db' starts before 'web'
+      # Docker Compose will wait for 'db' to be running before starting 'web'
+      - db
+    networks:
+      - app-network  # All services on same network can communicate
+
+  # Database service - PostgreSQL
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=mydb
+    volumes:
+      # Named volume persists data even if container is removed
+      # Without this, data would be lost when container stops
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+# Named volumes - data persists across container restarts
+volumes:
+  postgres-data:
+    # Docker manages this volume automatically
+    # Data stored in: /var/lib/docker/volumes/<project>_postgres-data
+
+# Networks - Docker Compose creates this automatically
+# All services can communicate using service names as hostnames
+networks:
+  app-network:
+    driver: bridge
+    # Bridge network allows containers to communicate
+    # No need to manually create with 'docker network create'
