@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # etcd - The distributed key-value store
+  # This is the same technology Kubernetes uses to store cluster state
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: etcd_server
+    environment:
+      - ETCD_NAME=etcd-server
+      - ETCD_DATA_DIR=/etcd-data
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER=etcd-server=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster-1
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    ports:
+      - "2379:2379"  # Client API port
+      - "2380:2380"  # Peer communication port
+    volumes:
+      - etcd_data:/etcd-data
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Watcher Service - Monitors changes to etcd keys
+  # This mimics how Kubernetes Controllers watch for changes in the cluster
+  watcher:
+    build: .
+    container_name: etcd_watcher
+    environment:
+      - ETCD_HOST=etcd
+      - ETCD_PORT=2379
+    depends_on:
+      etcd:
+        condition: service_healthy
+    command: python watcher.py
+    restart: unless-stopped
+
+volumes:
+  etcd_data:
