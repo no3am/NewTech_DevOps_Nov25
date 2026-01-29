@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  # replicas: The desired number of Pods to run
+  # Kubernetes will ensure exactly this many Pods are running at all times
+  # If a Pod dies, Kubernetes automatically creates a new one
+  replicas: 3
+  
+  # selector: How Kubernetes identifies which Pods belong to this Deployment
+  # It matches Pods based on their labels
+  selector:
+    matchLabels:
+      app: nginx
+  
+  # template: The blueprint for creating new Pods
+  # When Kubernetes needs to create a Pod, it uses this template
+  template:
+    metadata:
+      labels:
+        app: nginx  # This label must match the selector above!
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
