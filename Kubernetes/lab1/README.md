@@ -70,6 +70,22 @@ kubectl run nginx-pod --image=nginx:latest --restart=Never
 
 The `--restart=Never` flag ensures it creates a Pod directly, not a Deployment.
 
+#### Alternative: Create Pod from YAML (Declarative)
+
+You can create the same Pod using the declarative approach with the included `pod.yaml`:
+
+**Command:**
+```bash
+kubectl apply -f pod.yaml
+```
+
+**Expected Output:**
+```
+pod/nginx-pod created
+```
+
+The `pod.yaml` file defines the same nginx Pod: name `nginx-pod`, image `nginx:latest`, container port 80.
+
 ---
 
 ### Task 3: Inspect Your Pod
