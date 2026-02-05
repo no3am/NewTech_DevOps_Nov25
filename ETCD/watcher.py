@@ -16,7 +16,13 @@ HOW KUBERNETES USES THIS:
 import os
 import sys
 import time
-import etcd3
+
+try:
+    import etcd3
+except ImportError as e:
+    print(f"ERROR: Failed to import etcd3: {e}", file=sys.stderr)
+    print("Make sure etcd3 is installed: pip install etcd3", file=sys.stderr)
+    sys.exit(1)
 
 # Configuration from environment variables
 ETCD_HOST = os.getenv('ETCD_HOST', 'localhost')
@@ -24,10 +30,10 @@ ETCD_PORT = int(os.getenv('ETCD_PORT', '2379'))
 WATCH_KEY = '/config/background_color'
 
 def main():
-    print("=" * 60)
-    print("ETCD Watcher Service - Kubernetes Controller Simulation")
-    print("=" * 60)
-    print(f"Connecting to etcd at {ETCD_HOST}:{ETCD_PORT}...")
+    print("=" * 60, flush=True)
+    print("ETCD Watcher Service - Kubernetes Controller Simulation", flush=True)
+    print("=" * 60, flush=True)
+    print(f"Connecting to etcd at {ETCD_HOST}:{ETCD_PORT}...", flush=True)
     
     # Connect to etcd
     # In Kubernetes, Controllers connect to the etcd cluster through the API server
@@ -48,11 +54,12 @@ def main():
     try:
         value, metadata = client.get(WATCH_KEY)
         if value:
-            print(f"Current value: {value.decode('utf-8')}")
+            print(f"Current value: {value.decode('utf-8') if isinstance(value, bytes) else value}")
         else:
             print("Key does not exist yet. Waiting for first write...")
     except Exception as e:
-        print(f"Error reading initial value: {e}")
+        print(f"⚠ Could not read initial value: {e}")
+        print("   (This is okay - we'll still watch for new values)")
     
     print("-" * 60)
     print("\n🔍 WATCHING FOR CHANGES... (Press Ctrl+C to stop)\n")
@@ -64,40 +71,53 @@ def main():
         # Watch for changes to the key
         # In Kubernetes: Controllers watch for changes to specific resource types
         # Example: A Deployment Controller watches for Deployment objects
-        # Using watch() for a single key (watch_prefix() would work for key prefixes)
+        # Using watch() for a single key
         events_iterator, cancel = client.watch(WATCH_KEY)
         
         for event in events_iterator:
-            # Handle WatchResponse objects (etcd3 returns these)
-            # Each WatchResponse contains a list of events
-            events_list = event.events if hasattr(event, 'events') else [event]
-            
-            for evt in events_list:
-                if hasattr(evt, 'value') and evt.value is not None:
-                    # Key was created or updated
-                    new_value = evt.value.decode('utf-8')
-                    key_name = evt.key.decode('utf-8') if hasattr(evt, 'key') and evt.key else WATCH_KEY
-                    
-                    print("\n" + "=" * 60)
-                    print("🚨 DETECTED CHANGE! New Color is:", new_value)
-                    print("=" * 60)
-                    print(f"Event Type: {type(evt).__name__}")
-                    print(f"Key: {key_name}")
-                    print(f"Value: {new_value}")
-                    print(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
-                    print("\n💡 This is exactly how Kubernetes Controllers react to changes!")
-                    print("   - No polling needed")
-                    print("   - Instant notification")
-                    print("   - Event-driven architecture")
-                    print("-" * 60)
-                    print("\n🔍 Continuing to watch...\n")
-                elif hasattr(evt, 'value') and evt.value is None:
-                    # Key was deleted
-                    print("\n" + "=" * 60)
-                    print("🚨 DETECTED DELETION! Key was removed")
-                    print("=" * 60)
-                    print("-" * 60)
-                    print("\n🔍 Continuing to watch...\n")
+            # Handle WatchResponse objects - python3-etcd3 returns events differently
+            # The event might be a WatchResponse with events list, or individual events
+            try:
+                if hasattr(event, 'events'):
+                    # It's a WatchResponse object with multiple events
+                    events_list = event.events
+                else:
+                    # It's a single event
+                    events_list = [event]
+                
+                for evt in events_list:
+                    # Check if it's a PutEvent (create/update) or DeleteEvent
+                    if hasattr(evt, 'value') and evt.value is not None:
+                        # Key was created or updated
+                        new_value = evt.value.decode('utf-8') if isinstance(evt.value, bytes) else evt.value
+                        key_name = evt.key.decode('utf-8') if hasattr(evt, 'key') and evt.key and isinstance(evt.key, bytes) else (evt.key if hasattr(evt, 'key') and evt.key else WATCH_KEY)
+                        
+                        print("\n" + "=" * 60)
+                        print("🚨 DETECTED CHANGE! New Color is:", new_value)
+                        print("=" * 60)
+                        print(f"Event Type: {type(evt).__name__}")
+                        print(f"Key: {key_name}")
+                        print(f"Value: {new_value}")
+                        print(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
+                        print("\n💡 This is exactly how Kubernetes Controllers react to changes!")
+                        print("   - No polling needed")
+                        print("   - Instant notification")
+                        print("   - Event-driven architecture")
+                        print("-" * 60)
+                        print("\n🔍 Continuing to watch...\n")
+                    elif hasattr(evt, 'value') and evt.value is None:
+                        # Key was deleted
+                        print("\n" + "=" * 60)
+                        print("🚨 DETECTED DELETION! Key was removed")
+                        print("=" * 60)
+                        print("-" * 60)
+                        print("\n🔍 Continuing to watch...\n")
+            except Exception as e:
+                print(f"Error processing event: {e}")
+                print(f"Event type: {type(event)}")
+                print(f"Event attributes: {dir(event)}")
+                import traceback
+                traceback.print_exc()
     
     except KeyboardInterrupt:
         print("\n\nWatcher stopped by user.")
@@ -108,4 +128,10 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"\n\nFATAL ERROR: {e}", file=sys.stderr, flush=True)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)

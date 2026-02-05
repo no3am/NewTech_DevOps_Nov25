@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # etcd - The distributed key-value store
   # This is the same technology Kubernetes uses to store cluster state
@@ -35,6 +33,7 @@ services:
     environment:
       - ETCD_HOST=etcd
       - ETCD_PORT=2379
+      - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
     depends_on:
       etcd:
         condition: service_healthy

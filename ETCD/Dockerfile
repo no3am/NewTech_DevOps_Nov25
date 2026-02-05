@@ -9,5 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY watcher.py .
 
-# Run the watcher
-CMD ["python", "watcher.py"]
+# Run the watcher with unbuffered output
+ENV PYTHONUNBUFFERED=1
+CMD ["python", "-u", "watcher.py"]

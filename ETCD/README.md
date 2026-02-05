@@ -83,7 +83,7 @@ python writer.py red
 Event Type: PutEvent
 Key: /config/background_color
 Value: red
-Timestamp: 2024-01-15 10:30:45
+Timestamp: 2024-03-15 10:30:45
 
 💡 This is exactly how Kubernetes Controllers react to changes!
    - No polling needed
