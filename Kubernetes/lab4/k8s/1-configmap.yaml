@@ -1,0 +1,11 @@
+# ConfigMap: Non-sensitive configuration (public knowledge).
+# Use ConfigMaps for things like app names, feature flags, mission names.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spy-config
+  labels:
+    app: top-secret-dashboard
+data:
+  # Plain text - no encoding needed for ConfigMaps
+  mission: "Operation Golden Eye"

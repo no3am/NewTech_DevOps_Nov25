@@ -1,0 +1,53 @@
+# Deployment: Runs the Top Secret Dashboard.
+# The container gets MISSION_NAME from the ConfigMap and ACCESS_CODE from the Secret
+# via the env section and valueFrom - no hardcoded config in the image!
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: top-secret-dashboard
+  labels:
+    app: top-secret-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: top-secret-dashboard
+  template:
+    metadata:
+      labels:
+        app: top-secret-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: top-secret-dashboard:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            # valueFrom: inject a specific key from a ConfigMap into an env var
+            - name: MISSION_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: spy-config      # ConfigMap name (from 1-configmap.yaml)
+                  key: mission         # Key inside that ConfigMap
+            # valueFrom: inject a specific key from a Secret into an env var
+            - name: ACCESS_CODE
+              valueFrom:
+                secretKeyRef:
+                  name: spy-secret     # Secret name (from 2-secret.yaml)
+                  key: code            # Key inside that Secret (Kubernetes decodes base64 for you)
+---
+# Service: Expose the dashboard so we can hit it (NodePort for easy browser access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: top-secret-dashboard
+spec:
+  type: NodePort
+  selector:
+    app: top-secret-dashboard
+  ports:
+    - port: 80
+      targetPort: 5000
+      nodePort: 30008
+      name: http

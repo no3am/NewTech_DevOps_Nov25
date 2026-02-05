@@ -1,0 +1,30 @@
+# Postgres WITHOUT a Persistent Volume.
+# Data is stored only on the container's filesystem - when the Pod dies, data is LOST.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-stateless
+  labels:
+    app: postgres-stateless
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-stateless
+  template:
+    metadata:
+      labels:
+        app: postgres-stateless
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_USER
+              value: labuser
+            - name: POSTGRES_PASSWORD
+              value: labpass
+            - name: POSTGRES_DB
+              value: labdb
+          ports:
+            - containerPort: 5432

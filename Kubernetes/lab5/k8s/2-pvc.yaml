@@ -1,0 +1,15 @@
+# PersistentVolumeClaim: Requests storage from the cluster.
+# The cluster binds this to a PersistentVolume (or dynamic provisioner creates one).
+# ReadWriteOnce = one node at a time can mount it read-write (perfect for Postgres).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  labels:
+    app: postgres-stateful
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

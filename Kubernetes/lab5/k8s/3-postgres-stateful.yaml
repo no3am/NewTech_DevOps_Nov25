@@ -1,0 +1,37 @@
+# Postgres WITH a Persistent Volume.
+# Data is stored on the PVC - when the Pod is recreated, data SURVIVES.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-stateful
+  labels:
+    app: postgres-stateful
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-stateful
+  template:
+    metadata:
+      labels:
+        app: postgres-stateful
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_USER
+              value: labuser
+            - name: POSTGRES_PASSWORD
+              value: labpass
+            - name: POSTGRES_DB
+              value: labdb
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-data
