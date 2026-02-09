@@ -1,0 +1,45 @@
+# DaemonSet: Ensures one Pod runs on every node in the cluster.
+# Use for node-level agents: log collectors (Fluentd), monitoring, networking plugins.
+# - Ignores normal scheduling (no "replicas" count - it runs one per node).
+# - When a new node joins, the DaemonSet automatically schedules a Pod on it.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-logging
+  namespace: kube-system
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-logging
+  template:
+    metadata:
+      labels:
+        name: fluentd-logging
+    spec:
+      tolerations:
+        # Allow scheduling on control-plane node (often tainted with NoSchedule)
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: fluentd
+          image: quay.io/fluentd_elasticsearch/fluentd:latest
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log

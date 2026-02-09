@@ -1,0 +1,36 @@
+# StatefulSet: Ordered, stable identity for Pods.
+# - Pods are created in order (web-0, web-1, web-2) and scaled the same way.
+# - Each Pod gets a stable hostname and DNS name (web-0.nginx, web-1.nginx, ...).
+# - volumeClaimTemplate creates a unique PVC per Pod; storage stays "sticky" to that Pod.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  serviceName: "nginx"   # Must match the Headless Service name
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+              name: web
+          volumeMounts:
+            - name: www
+              mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+    - metadata:
+        name: www
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
