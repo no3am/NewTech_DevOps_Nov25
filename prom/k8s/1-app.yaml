@@ -1,0 +1,41 @@
+# ---
+# Part 2: The "Patient" — app that exposes metrics for Prometheus to scrape
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metric-app
+  labels:
+    app: metric-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: metric-app
+  template:
+    metadata:
+      labels:
+        app: metric-app
+    spec:
+      containers:
+        - name: metric-app
+          image: metric-app:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metric-app-service
+  labels:
+    app: metric-app
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: metric-app

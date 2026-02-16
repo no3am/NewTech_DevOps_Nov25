@@ -1,0 +1,6 @@
+apiVersion: v2
+name: web-server
+description: A simple nginx web server chart for Helm fundamentals
+type: application
+version: 0.1.0
+appVersion: "1.14.2"

@@ -1,0 +1,6 @@
+# Default values for web-server.
+# values.yaml separates configuration from logic—change these without touching templates.
+
+image: nginx:1.14.2
+replicaCount: 1
+environment: dev

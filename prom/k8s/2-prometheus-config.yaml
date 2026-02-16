@@ -1,0 +1,19 @@
+# ---
+# Prometheus config: where to scrape (Pull Model). Mounted into the Prometheus server.
+# ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+data:
+  # Key must be the filename Prometheus will read
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+
+    scrape_configs:
+      # This is the Service Discovery wiring: Prometheus pulls from this target
+      - job_name: my-app-job
+        static_configs:
+          - targets:
+              - metric-app-service:8000
