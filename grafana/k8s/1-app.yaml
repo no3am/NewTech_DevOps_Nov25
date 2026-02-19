@@ -1,0 +1,45 @@
+# ---
+# Custom Flask app: exposes / and /error, metrics on /metrics
+# Service has label app: custom-api so the ServiceMonitor can discover it
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-api
+  namespace: monitoring
+  labels:
+    app: custom-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-api
+  template:
+    metadata:
+      labels:
+        app: custom-api
+    spec:
+      containers:
+        - name: custom-api
+          image: custom-api:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-api-service
+  namespace: monitoring
+  labels:
+    # Crucial: ServiceMonitor uses this label to find our app
+    app: custom-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+      protocol: TCP
+      name: http
+  selector:
+    app: custom-api

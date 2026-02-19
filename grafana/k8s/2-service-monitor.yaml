@@ -1,0 +1,19 @@
+# ---
+# ServiceMonitor: tells the Prometheus Operator to scrape our custom app
+# Selector must match the label on the app's Service (app: custom-api)
+# ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: custom-api
+  namespace: monitoring
+  labels:
+    app: custom-api
+spec:
+  selector:
+    matchLabels:
+      app: custom-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
