@@ -1,0 +1,8 @@
+# ---
+# Snippet for: helm upgrade monitoring prometheus-community/kube-prometheus-stack -f k8s/5-prometheus-values.yaml -n monitoring
+# Configures Prometheus to remote-write all scraped metrics to Mimir (long-term storage).
+# ---
+prometheus:
+  prometheusSpec:
+    remoteWrite:
+      - url: http://mimir-service:8080/api/v1/push

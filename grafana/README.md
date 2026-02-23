@@ -130,7 +130,6 @@ You should see (at least) two series: one for `http_status="200"` and one for `h
 
 ## Step 6: The Spike (Act 3)
 
-This is the **“Aha!”** moment.
 
 1. Keep your Grafana dashboard open on the panel you just created (with the PromQL query above). Use a short time range (e.g. **Last 5 minutes**) and refresh **Every 5s** if you like.
 2. In a terminal, scale the load generator to **10 replicas**:
