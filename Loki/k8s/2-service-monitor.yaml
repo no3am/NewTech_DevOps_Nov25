@@ -1,0 +1,21 @@
+# ---
+# ServiceMonitor: Prometheus scrapes the Payment Processor /metrics
+# Selector matches the app's Service label (app: payment-processor)
+# ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: payment-processor
+  namespace: monitoring
+  labels:
+    app: payment-processor
+    # Required: Prometheus (release=monitoring) only scrapes ServiceMonitors with this label
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: payment-processor
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

@@ -1,0 +1,44 @@
+# ---
+# Payment Processor (Victim App): /checkout with optional ?item=, /metrics
+# Label app: payment-processor is required for ServiceMonitor and log discovery
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-processor
+  namespace: monitoring
+  labels:
+    app: payment-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-processor
+  template:
+    metadata:
+      labels:
+        app: payment-processor
+    spec:
+      containers:
+        - name: payment-processor
+          image: payment-processor:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-processor-service
+  namespace: monitoring
+  labels:
+    app: payment-processor
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 5000
+      protocol: TCP
+      name: http
+  selector:
+    app: payment-processor

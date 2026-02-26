@@ -1,0 +1,40 @@
+# ---
+# Traffic generator: hits /checkout in a loop. ~10% of requests use item=cursed_amulet (Poison Pill)
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-generator
+  namespace: monitoring
+  labels:
+    app: traffic-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traffic-generator
+  template:
+    metadata:
+      labels:
+        app: traffic-generator
+    spec:
+      containers:
+        - name: traffic-generator
+          image: alpine:3.18
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache curl
+              while true; do
+                R=$((RANDOM % 10))
+                if [ "$R" -eq 0 ]; then
+                  curl -s -o /dev/null -w "%{http_code}" "http://payment-processor-service/checkout?item=cursed_amulet"
+                else
+                  case $((RANDOM % 2)) in
+                    0) curl -s -o /dev/null -w "%{http_code}" "http://payment-processor-service/checkout?item=shoes" ;;
+                    1) curl -s -o /dev/null -w "%{http_code}" "http://payment-processor-service/checkout?item=hat" ;;
+                  esac
+                fi
+                sleep 1
+              done
