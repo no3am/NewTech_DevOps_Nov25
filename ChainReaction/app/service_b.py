@@ -47,3 +47,8 @@ async def request_handler():
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "B"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

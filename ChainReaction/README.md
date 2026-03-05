@@ -14,8 +14,8 @@ You will instrument a **3-tier microservice architecture** with **OpenTelemetry 
 
 ## Prerequisites
 
-- Kubernetes cluster, **kubectl**, **Docker** (or similar).
-- **Grafana** (e.g. from kube-prometheus-stack in `monitoring` namespace). You will add **Tempo** and **Loki** as data sources.
+- Kubernetes cluster (e.g. **Minikube**), **kubectl**, **Docker** (or similar).
+- The lab is **self-contained**: you deploy Grafana, Tempo, and Loki in the same namespace. No existing Grafana or other stacks are required.
 
 ---
 
@@ -30,9 +30,10 @@ kubectl apply -f k8s/0-otel-collector.yaml
 kubectl apply -f k8s/1-tempo.yaml
 kubectl apply -f k8s/2-loki.yaml
 kubectl apply -f k8s/4-promtail.yaml
+kubectl apply -f k8s/5-grafana.yaml
 ```
 
-Wait until Pods are ready in `chain-reaction`.
+Wait until Pods are ready in `chain-reaction` (including **grafana**, **tempo**, **loki**, **otel-collector**).
 
 ### 1.2 Build and deploy the apps (no tracing yet)
 
@@ -56,19 +57,20 @@ while true; do curl -s http://localhost:8000/; sleep 1; done
 
 You will see responses with ~2 seconds latency (A → B → C, and C sleeps 2s).
 
-### 1.4 Add Tempo and Loki in Grafana
+### 1.4 Open Grafana and add Tempo and Loki
 
-- **Tempo:** Data source, URL `http://tempo.chain-reaction.svc.cluster.local:3200` (or `http://tempo:3200` if Grafana is in the same cluster and you use the short name). Access: **Server**.
-- **Loki:** Data source, URL `http://loki.chain-reaction.svc.cluster.local:3100`. Access: **Server**.
-
-If Grafana runs in another namespace (e.g. `monitoring`), use the full DNS above or port-forward:
+Port-forward Grafana and open it in your browser:
 
 ```bash
-kubectl port-forward -n chain-reaction svc/tempo 3200:3200
-kubectl port-forward -n chain-reaction svc/loki 3100:3100
+kubectl port-forward -n chain-reaction svc/grafana 3000:3000
 ```
 
-Then set Tempo URL to `http://localhost:3200` and Loki to `http://localhost:3100`.
+Open **http://localhost:3000**. Log in with **admin** / **admin** (change password if prompted).
+
+Add two data sources (Connections → Data sources → Add data source):
+
+- **Tempo:** Type **Tempo**, URL **`http://tempo:3200`** (Grafana is in the same namespace). Access: **Server**. Save & test.
+- **Loki:** Type **Loki**, URL **`http://loki:3100`**. Access: **Server**. Save & test.
 
 ### 1.5 Observe the blindness
 

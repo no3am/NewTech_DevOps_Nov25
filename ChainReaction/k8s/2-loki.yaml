@@ -13,37 +13,29 @@ data:
     server:
       http_listen_port: 3100
 
-    distributor:
+    common:
+      instance_addr: 127.0.0.1
+      path_prefix: /var/loki
+      storage:
+        filesystem:
+          chunks_directory: /var/loki/chunks
+          rules_directory: /var/loki/rules
       ring:
         kvstore:
           store: inmemory
-      pool:
-        health_check_ingesters: true
 
-    ingester:
-      ring:
-        kvstore:
-          store: inmemory
-        replication_factor: 1
-      min_ready_duration: 0s
-      final_sleep: 0s
+    schema_config:
+      configs:
+        - from: "2020-10-24"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
 
-    blocks_storage:
-      backend: filesystem
-      filesystem:
-        dir: /var/loki/tsdb
-      tsdb:
-        dir: /var/loki/tsdb
-      bucket_store:
-        sync_dir: /var/loki/tsdb-sync
-
-    compactor:
-      data_dir: /var/loki/compactor
-
-    ruler_storage:
-      backend: local
-      local:
-        directory: /var/loki/rules
+    ruler:
+      alertmanager_url: http://localhost:9093
 ---
 apiVersion: apps/v1
 kind: Deployment

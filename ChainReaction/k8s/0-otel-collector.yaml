@@ -32,15 +32,13 @@ data:
         endpoint: tempo:4317
         tls:
           insecure: true
-      logging:
-        verbosity: normal
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/tempo, logging]
+          exporters: [otlp/tempo]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -61,15 +59,16 @@ spec:
     spec:
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:latest
+          image: otel/opentelemetry-collector-contrib:0.96.0
           args:
-            - --config=/etc/otel/config.yaml
+            - --config=/etc/otel-collector/config.yaml
           ports:
             - containerPort: 4317   # OTLP gRPC
             - containerPort: 4318   # OTLP HTTP
           volumeMounts:
             - name: config
-              mountPath: /etc/otel
+              mountPath: /etc/otel-collector
+              readOnly: true
       volumes:
         - name: config
           configMap:
