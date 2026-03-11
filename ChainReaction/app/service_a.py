@@ -8,6 +8,13 @@ import sys
 
 import httpx
 from fastapi import FastAPI
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 app = FastAPI(title="Service-A (Gateway)")
 
@@ -31,8 +38,22 @@ logging.getLogger().addHandler(_handler)
 logging.getLogger().setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- STEP 2: INSERT OTEL INSTRUMENTATION HERE ---
-# (OTLPSpanExporter -> otel-collector:4317, FastAPIInstrumentor, RequestsInstrumentor, trace_id in logs)
+# OTel: send spans to Collector -> Tempo
+resource = Resource.create({"service.name": "service-a"})
+provider = TracerProvider(resource=resource)
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-collector:4318/v1/traces")))
+trace.set_tracer_provider(provider)
+FastAPIInstrumentor.instrument_app(app)
+HTTPXClientInstrumentor().instrument()
+
+# Correlation key: add trace_id to every log line so Grafana can link Tempo <-> Loki
+def trace_id_filter(record):
+    span = trace.get_current_span()
+    ctx = span.get_span_context()
+    record.trace_id = format(ctx.trace_id, "032x") if ctx.is_valid else ""
+    return True
+
+logger.addFilter(trace_id_filter)
 
 
 @app.get("/")

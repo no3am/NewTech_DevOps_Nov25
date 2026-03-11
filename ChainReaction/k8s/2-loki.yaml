@@ -16,6 +16,7 @@ data:
     common:
       instance_addr: 127.0.0.1
       path_prefix: /var/loki
+      replication_factor: 1
       storage:
         filesystem:
           chunks_directory: /var/loki/chunks

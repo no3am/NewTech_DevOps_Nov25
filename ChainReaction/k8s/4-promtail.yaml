@@ -1,7 +1,36 @@
 # ---
 # Promtail: ships pod logs from the cluster to Loki for trace–log correlation.
 # Optional: only needed if you want to jump from Tempo spans to Loki in Phase 3.
+# Requires RBAC below so Promtail can discover pods via the Kubernetes API.
 # ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promtail
+  namespace: chain-reaction
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promtail-pods
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promtail-pods
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promtail-pods
+subjects:
+  - kind: ServiceAccount
+    name: promtail
+    namespace: chain-reaction
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,6 +46,8 @@ data:
       - url: http://loki:3100/loki/api/v1/push
     scrape_configs:
       - job_name: kubernetes-pods
+        pipeline_stages:
+          - cri: {}
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
@@ -28,10 +59,11 @@ data:
             target_label: container
           - source_labels: [__meta_kubernetes_pod_label_app]
             target_label: app
-          - replacement: /var/log/pods/*$1/*.log
+          - source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
             separator: /
-            source_labels: [__meta_kubernetes_pod_uid, __meta_kubernetes_pod_container_name]
             target_label: __path__
+            regex: (.+)/(.+)
+            replacement: /var/log/pods/$1/$2/*.log
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -49,7 +81,10 @@ spec:
       labels:
         app: promtail
     spec:
-      serviceAccountName: default
+      serviceAccountName: promtail
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
       containers:
         - name: promtail
           image: grafana/promtail:latest
@@ -58,8 +93,8 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/promtail
-            - name: varlog
-              mountPath: /var/log
+            - name: pods
+              mountPath: /var/log/pods
               readOnly: true
             - name: varlibdockercontainers
               mountPath: /var/lib/docker/containers
@@ -68,9 +103,9 @@ spec:
         - name: config
           configMap:
             name: promtail-config
-        - name: varlog
+        - name: pods
           hostPath:
-            path: /var/log
+            path: /var/log/pods
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
