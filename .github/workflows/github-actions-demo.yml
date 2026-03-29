@@ -1,0 +1,36 @@
+# This workflow runs Python tests automatically
+# It triggers when you push code to GitHub
+
+name: Python Tests
+
+# When to run this workflow
+on: push
+
+jobs:
+  # Job 1: Run our tests
+  test:
+    runs-on: ubuntu-latest    # Use Ubuntu Linux
+    
+    steps:
+    # Step 1: Get the code from the repository
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    # Step 2: Set up Python
+    - name: Set up Python 3.12.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.10'
+    
+    # Step 3: Install any dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+      working-directory: './GH_Actions/lab1'
+    
+    # Step 4: Run the tests
+    - name: Run tests
+      run: |
+        python -m unittest test_calculator.py -v
+      working-directory: './GH_Actions/lab1'
