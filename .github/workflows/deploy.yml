@@ -1,0 +1,54 @@
+name: deploy to ec2
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  setup_environment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'  # Changed from 3.11
+      - run: |
+          pip install -r mini-project1/app/requirements.txt
+
+      - name: Running Tests With Coverage
+        run: |
+          pytest mini-project1/app/tests/ --cov=app --cov-report=xml --cov-report=term-missing
+
+      - name: SSH_into_EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOSTNAME: ${{ secrets.EC2_HOST }}
+          USER_NAME: ${{ secrets.USER_NAME }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key
+          chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} << 'EOF'
+          
+          # Navigate to app directory and pull latest code
+          cd /home/ubuntu/flask-app
+          git pull origin main
+          
+          # Activate virtual environment and install dependencies
+          cd mini-project1
+          source minienv/bin/activate
+          cd app
+          pip install -r requirements.txt
+          
+          # Restart the service
+          sudo systemctl restart flaskapp.service
+          
+          # Wait a moment for service to start
+          sleep 3
+          
+          # Health check
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health)
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Health check failed with status: $STATUS"
+            exit 1
+          fi
+          echo "Deployment successful! Health check passed."
+          EOF
